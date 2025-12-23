@@ -2,30 +2,42 @@ controller_manager:
   ros__parameters:
     update_rate: 100
 
-    joint_1_controller:
-      type: forward_command_controller/ForwardCommandController
-    
-    joint_2_controller:
-      type: forward_command_controller/ForwardCommandController
-    
-    joint_3_controller:
-      type: forward_command_controller/ForwardCommandController
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-joint_1_controller:
-  ros__parameters:
-    joints: [joint_1]
-    interface_name: effort
+    forward_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
 
-joint_2_controller:
+joint_trajectory_controller:
   ros__parameters:
-    joints: [joint_2]
-    interface_name: effort
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+    
+    command_interfaces:
+      - position
+    
+    state_interfaces:
+      - position
+      - velocity
+    
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    
+    allow_partial_joints_goal: false
+    open_loop_control: true
+    allow_integration_in_goal_trajectories: true
 
-joint_3_controller:
+forward_velocity_controller:
   ros__parameters:
-    joints: [joint_3]
-    interface_name: effort
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+    interface_name: velocity
+
 

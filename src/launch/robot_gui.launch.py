@@ -9,7 +9,7 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     
     # Get package directory
-    pkg_name = 'arm_bot'  # Replace with your actual package name
+    pkg_name = '3_link_arm'  # Replace with your actual package name
     pkg_share = get_package_share_directory(pkg_name)
     
     # Path to XACRO file
@@ -39,7 +39,7 @@ def generate_launch_description():
         executable='spawn_entity.py',
         arguments=[
             '-topic', 'robot_description',
-            '-entity', 'arm_bot'
+            '-entity', '3_link_arm'
         ],
         output='screen'
     )

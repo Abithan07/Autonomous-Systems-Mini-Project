@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(arm_bot)
+project(3_link_arm)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -35,6 +35,16 @@ endif()
 install(
   DIRECTORY config description launch worlds meshes
   DESTINATION share/${PROJECT_NAME}
+)
+
+# Install Python scripts as executables
+install(
+  PROGRAMS
+    scripts/arm_ekf_position_only.py
+    scripts/constant_velocity_motion.py
+    scripts/ekf_data_logger_velocity.py
+    scripts/plot_velocity_results.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()
