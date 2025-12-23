@@ -131,7 +131,7 @@ def generate_launch_description():
             actions=[
                 Node(
                     package='3_link_arm',
-                    executable='arm_ekf_position_only.py',
+                    executable='ekf.py',
                     name='arm_ekf_position',
                     output='screen',
                     parameters=[{
@@ -154,7 +154,7 @@ def generate_launch_description():
             actions=[
                 Node(
                     package='3_link_arm',
-                    executable='ekf_data_logger_velocity.py',
+                    executable='ekf_data_logger.py',
                     name='ekf_data_logger',
                     output='screen',
                     parameters=[{

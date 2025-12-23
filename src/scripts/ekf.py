@@ -35,9 +35,6 @@ from std_msgs.msg import Float64MultiArray
 import numpy as np
 
 
-# =============================================================================
-# PARAMETERS
-# =============================================================================
 DEFAULT_PROCESS_NOISE = 0.01         # R_t: Process/motion noise (rad)
 DEFAULT_MEASUREMENT_NOISE = 0.05     # Q_t: Measurement noise (rad)
 DEFAULT_INITIAL_COV = 1.0
@@ -104,18 +101,14 @@ class ArmEKFPositionOnly(Node):
         # Joint names
         self.joint_names = ['joint_1', 'joint_2', 'joint_3']
         
-        # =================================================================
         # EKF State Variables
-        # =================================================================
         # State mean μ = [θ1, θ2, θ3]
         self.mu = np.zeros(self.n)
         
         # State covariance Σ (3x3)
         self.Sigma = np.eye(self.n) * self.initial_cov
         
-        # =================================================================
         # EKF Matrices (Lecture Notation)
-        # =================================================================
         # G_t: Jacobian of motion model g w.r.t. state (∂g/∂μ)
         # Since g(u, μ) = μ + u*Δt, G = ∂g/∂μ = I
         self.G = np.eye(self.n)
@@ -133,16 +126,12 @@ class ArmEKFPositionOnly(Node):
         # Identity matrix
         self.I = np.eye(self.n)
         
-        # =================================================================
         # State flags
-        # =================================================================
         self.initialized = False
         self.gazebo_positions = None
         self.gazebo_velocities = None
         
-        # =================================================================
         # Publishers
-        # =================================================================
         self.pub_noisy = self.create_publisher(
             JointState, '/noisy/joint_states', 10)
         
@@ -152,15 +141,11 @@ class ArmEKFPositionOnly(Node):
         self.pub_covariance = self.create_publisher(
             Float64MultiArray, '/ekf/covariance', 10)
         
-        # =================================================================
         # Subscribers
-        # =================================================================
         self.sub_gazebo = self.create_subscription(
             JointState, '/joint_states', self.gazebo_callback, 10)
         
-        # =================================================================
         # Timer
-        # =================================================================
         self.ekf_timer = self.create_timer(self.dt, self.ekf_cycle)
         
         self.get_logger().info("ArmEKF (Position Only) initialized - waiting for sensor data...")
@@ -220,61 +205,31 @@ class ArmEKFPositionOnly(Node):
         return mu_bar
     
     def ekf_predict(self, u: np.ndarray):
-        """
-        EKF Prediction Step (Lines 2-3 of algorithm)
-        
-        Line 2: μ̄_t = g(u_t, μ_{t-1})
-        Line 3: Σ̄_t = G_t Σ_{t-1} G_t^T + R_t
-        
-        Args:
-            u: Control input u_t (velocity from sensor)
-            
-        Returns:
-            mu_bar: Predicted state μ̄_t
-            Sigma_bar: Predicted covariance Σ̄_t
-        """
-        # Line 2: μ̄_t = g(u_t, μ_{t-1})
+        # μ̄_t = g(u_t, μ_{t-1})
         mu_bar = self.motion_model_g(self.mu, u)
         
-        # Line 3: Σ̄_t = G_t Σ_{t-1} G_t^T + R_t
+        # Σ̄_t = G_t Σ_{t-1} G_t^T + R_t
         Sigma_bar = self.G @ self.Sigma @ self.G.T + self.R
         
         return mu_bar, Sigma_bar
     
     def ekf_update(self, mu_bar: np.ndarray, Sigma_bar: np.ndarray, z: np.ndarray):
-        """
-        EKF Update Step (Lines 4-6 of algorithm)
+        # K_t = Σ̄_t H_t^T (H_t Σ̄_t H_t^T + Q_t)^{-1}
+        S = self.H @ Sigma_bar @ self.H.T + self.Q
+        K = Sigma_bar @ self.H.T @ np.linalg.inv(S)
         
-        Line 4: K_t = Σ̄_t H_t^T (H_t Σ̄_t H_t^T + Q_t)^{-1}
-        Line 5: μ_t = μ̄_t + K_t(z_t - h(μ̄_t))
-        Line 6: Σ_t = (I - K_t H_t) Σ̄_t
-        
-        Args:
-            mu_bar: Predicted state μ̄_t
-            Sigma_bar: Predicted covariance Σ̄_t
-            z: Measurement z_t (noisy position)
-        """
-        # Line 4: K_t = Σ̄_t H_t^T (H_t Σ̄_t H_t^T + Q_t)^{-1}
-        S = self.H @ Sigma_bar @ self.H.T + self.Q  # Innovation covariance
-        K = Sigma_bar @ self.H.T @ np.linalg.inv(S)  # Kalman gain K_t
-        
-        # Line 5: μ_t = μ̄_t + K_t(z_t - h(μ̄_t))
-        innovation = z - self.observation_model_h(mu_bar)  # z_t - h(μ̄_t)
+        # μ_t = μ̄_t + K_t(z_t - h(μ̄_t))
+        innovation = z - self.observation_model_h(mu_bar)
         self.mu = mu_bar + K @ innovation
         
-        # Line 6: Σ_t = (I - K_t H_t) Σ̄_t
+        # Σ_t = (I - K_t H_t) Σ̄_t
         self.Sigma = (self.I - K @ self.H) @ Sigma_bar
     
     def ekf_cycle(self):
-        """
-        Main EKF cycle - runs the complete EKF algorithm.
-        
-        EKF(μ_{t-1}, Σ_{t-1}, u_t, z_t) → μ_t, Σ_t
-        """
         if self.gazebo_positions is None or self.gazebo_velocities is None:
             return
         
-        # Get control input u_t (velocity from sensor, no noise)
+        # Get control input u_t (velocity)
         u_t = self.gazebo_velocities.copy()
         
         # Get measurement z_t (noisy position)
@@ -288,10 +243,10 @@ class ArmEKFPositionOnly(Node):
             self.get_logger().info(f"EKF initialized with μ_0: {self.mu}")
             return
         
-        # EKF Prediction: Lines 2-3
+        # EKF Prediction
         mu_bar, Sigma_bar = self.ekf_predict(u_t)
         
-        # EKF Update: Lines 4-6
+        # EKF Update
         self.ekf_update(mu_bar, Sigma_bar, z_t)
         
         # Publish results

@@ -33,7 +33,7 @@ class EKFDataLoggerVelocity(Node):
     """
     
     def __init__(self):
-        super().__init__('ekf_data_logger_velocity')
+        super().__init__('ekf_data_logger')
         self.get_logger().info("EKFDataLoggerVelocity initializing...")
         
     def init(self) -> bool:

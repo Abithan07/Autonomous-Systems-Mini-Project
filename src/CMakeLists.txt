@@ -40,9 +40,9 @@ install(
 # Install Python scripts as executables
 install(
   PROGRAMS
-    scripts/arm_ekf_position_only.py
+    scripts/ekf.py
     scripts/constant_velocity_motion.py
-    scripts/ekf_data_logger_velocity.py
+    scripts/ekf_data_logger.py
     scripts/plot_velocity_results.py
   DESTINATION lib/${PROJECT_NAME}
 )
