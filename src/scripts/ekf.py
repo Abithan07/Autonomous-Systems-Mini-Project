@@ -11,21 +11,7 @@ Following lecture notation:
         Σ_t = (I - K_t H_t) Σ̄_t                         # Covariance update
         return μ_t, Σ_t
 
-Where:
-    μ (mu)     = state mean [θ1, θ2, θ3]
-    Σ (Sigma)  = state covariance
-    G_t        = Jacobian of motion model g (∂g/∂μ)
-    H_t        = Jacobian of observation model h (∂h/∂μ)
-    R_t        = process/motion noise covariance
-    Q_t        = measurement noise covariance
-    K_t        = Kalman gain
-    g()        = motion model: g(u_t, μ_{t-1}) = μ_{t-1} + u_t * Δt
-    h()        = observation model: h(μ̄_t) = μ̄_t (direct observation)
-    u_t        = control input (velocity from sensor)
-    z_t        = measurement (noisy position)
-
 Author: Abithan
-Date: December 2025
 """
 
 import rclpy
@@ -42,26 +28,6 @@ DEFAULT_EKF_RATE = 50.0              # Match with ground truth and logger rate
 
 
 class ArmEKFPositionOnly(Node):
-    """
-    EKF Node - Position Only Estimation using Velocity Model.
-    
-    State: μ = [θ1, θ2, θ3] (position only)
-    
-    Motion Model g(u_t, μ_{t-1}):
-        μ̄_t = μ_{t-1} + u_t * Δt
-        where u_t = measured velocity (control input)
-        
-    Observation Model h(μ̄_t):
-        z_t = h(μ̄_t) = μ̄_t  (direct position observation)
-    
-    Subscribes:
-        /joint_states - Gazebo sensor (positions and velocities)
-        
-    Publishes:
-        /noisy/joint_states - Position with noise, velocity clean
-        /ekf/joint_states - EKF filtered position estimate
-        /ekf/covariance - Current covariance diagonal
-    """
     
     def __init__(self):
         super().__init__('arm_ekf_position_node')
@@ -102,22 +68,20 @@ class ArmEKFPositionOnly(Node):
         self.joint_names = ['joint_1', 'joint_2', 'joint_3']
         
         # EKF State Variables
-        # State mean μ = [θ1, θ2, θ3]
+        # μ = [θ1, θ2, θ3]
         self.mu = np.zeros(self.n)
         
-        # State covariance Σ (3x3)
+        # Σ (3x3)
         self.Sigma = np.eye(self.n) * self.initial_cov
         
-        # EKF Matrices (Lecture Notation)
-        # G_t: Jacobian of motion model g w.r.t. state (∂g/∂μ)
-        # Since g(u, μ) = μ + u*Δt, G = ∂g/∂μ = I
+        # EKF Matrices
+        # G_t
         self.G = np.eye(self.n)
         
-        # R_t: Process/motion noise covariance
+        # R_t
         self.R = np.eye(self.n) * (self.process_noise ** 2)
         
-        # H_t: Jacobian of observation model h w.r.t. state (∂h/∂μ)
-        # Since h(μ) = μ (direct observation), H = I
+        # H_t
         self.H = np.eye(self.n)
         
         # Q_t: Measurement noise covariance
@@ -176,32 +140,9 @@ class ArmEKFPositionOnly(Node):
         return positions + noise
     
     def motion_model_g(self, mu_prev: np.ndarray, u: np.ndarray) -> np.ndarray:
-        """
-        Motion model: g(u_t, μ_{t-1})
-        
-        μ̄_t = μ_{t-1} + u_t * Δt
-        
-        Args:
-            mu_prev: Previous state μ_{t-1}
-            u: Control input u_t (velocity)
-            
-        Returns:
-            μ̄_t: Predicted state
-        """
         return mu_prev + u * self.dt
     
     def observation_model_h(self, mu_bar: np.ndarray) -> np.ndarray:
-        """
-        Observation model: h(μ̄_t)
-        
-        For direct position observation: h(μ̄_t) = μ̄_t
-        
-        Args:
-            mu_bar: Predicted state μ̄_t
-            
-        Returns:
-            Expected measurement
-        """
         return mu_bar
     
     def ekf_predict(self, u: np.ndarray):

@@ -7,13 +7,6 @@ This launch file starts the velocity-based EKF implementation:
 3. Constant velocity motion generator
 4. Velocity model EKF estimator
 5. Data logger
-
-Model:
-    θ_{k+1} = θ_k + θ̇_k * Δt
-    θ̇_{k+1} = θ̇_k
-
-Usage:
-    ros2 launch 3_link_arm ekf_velocity.launch.py
 """
 
 from launch import LaunchDescription
@@ -62,7 +55,7 @@ def generate_launch_description():
     velocity_rad_s = 2.0 * math.pi / 10.0
     
     return LaunchDescription([
-        # ==================== LAUNCH ARGUMENTS ====================
+        # LAUNCH ARGUMENTS
         DeclareLaunchArgument(
             'use_ros2_control',
             default_value='true',
@@ -74,7 +67,7 @@ def generate_launch_description():
             description='Enable simulation mode'
         ),
         
-        # ==================== ROBOT STATE PUBLISHER ====================
+        # ROBOT STATE PUBLISHER
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
@@ -89,7 +82,7 @@ def generate_launch_description():
             }]
         ),
         
-        # ==================== GAZEBO ====================
+        # GAZEBO
         gazebo_launch,
         
         # Wait for Gazebo to start, then spawn the robot
@@ -98,7 +91,7 @@ def generate_launch_description():
             actions=[spawn_entity]
         ),
         
-        # ==================== CONTROLLERS ====================
+        # CONTROLLERS
         # Joint state broadcaster
         TimerAction(
             period=8.0,
@@ -125,7 +118,7 @@ def generate_launch_description():
             ]
         ),
         
-        # ==================== EKF ESTIMATOR (Position Only, uses velocity for prediction) ====================
+        # EKF ESTIMATOR
         TimerAction(
             period=12.0,
             actions=[
@@ -139,8 +132,8 @@ def generate_launch_description():
                         'ekf_rate': 50.0,             # Match with ground truth rate
                         # Process noise for position
                         'process_noise': 0.02,        # Position (rad)
-                        # Measurement noise for position (increased)
-                        'measurement_noise': 0.2,     # Position (rad) - increased from 0.05
+                        # Measurement noise for position
+                        'measurement_noise': 0.2,     # Position (rad)
                         # Initial covariance
                         'initial_covariance': 10.0,
                     }]
@@ -148,7 +141,7 @@ def generate_launch_description():
             ]
         ),
         
-        # ==================== DATA LOGGER (start with EKF to capture initial covariance!) ====================
+        # DATA LOGGER
         TimerAction(
             period=12.0,  # Same time as EKF
             actions=[
@@ -167,7 +160,7 @@ def generate_launch_description():
             ]
         ),
         
-        # ==================== CONSTANT VELOCITY MOTION (after logger!) ====================
+        # CONSTANT VELOCITY MOTION
         TimerAction(
             period=13.0,
             actions=[
@@ -187,7 +180,7 @@ def generate_launch_description():
             ]
         ),
         
-        # ==================== RVIZ ====================
+        # RVIZ
         Node(
             package='rviz2',
             executable='rviz2',

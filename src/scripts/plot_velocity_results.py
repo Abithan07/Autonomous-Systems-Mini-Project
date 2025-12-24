@@ -8,13 +8,6 @@ Generates comprehensive plots for EKF evaluation:
 3. RMSE bar chart comparison
 4. Covariance evolution
 
-Model: θ_{k+1} = θ_k + θ̇_k * Δt (velocity as control input)
-State: [θ1, θ2, θ3] (position only)
-
-Usage:
-    python3 plot_velocity_results.py [log_directory]
-    
-    If no directory provided, uses the most recent log in log_files/
 """
 
 import sys
@@ -75,10 +68,7 @@ def plot_results(df, output_dir):
     time = df['timestamp'].values
     colors = ['#E74C3C', '#3498DB', '#2ECC71']
     joint_labels = ['Joint 1 (Base)', 'Joint 2 (Shoulder)', 'Joint 3 (Elbow)']
-    
-    # ==========================================================================
-    # Generate individual joint plots (Position Tracking + Covariance)
-    # ==========================================================================
+
     for idx in range(3):
         i = idx + 1
         fig, axes = plt.subplots(2, 1, figsize=(12, 8), height_ratios=[2, 1])
@@ -132,9 +122,6 @@ def plot_results(df, output_dir):
         print(f"Saved: {output_path}")
         plt.close()
     
-    # ==========================================================================
-    # Generate summary plot (All Joints Comparison, Error, RMSE)
-    # ==========================================================================
     fig = plt.figure(figsize=(16, 12))
     gs = GridSpec(2, 2, figure=fig, hspace=0.3, wspace=0.25)
     

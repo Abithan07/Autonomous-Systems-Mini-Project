@@ -11,7 +11,6 @@ Publishes:
   - Motion start/stop signals
 
 Author: Abithan
-Date: December 2025
 """
 
 import rclpy
@@ -29,18 +28,6 @@ DEFAULT_PUBLISH_RATE = 50.0  # Hz
 
 
 class ConstantVelocityMotion(Node):
-    """
-    Generates constant velocity motion for all joints.
-    
-    All joints rotate at the same constant velocity:
-    - Velocity: 360°/10s = 0.6283 rad/s
-    - Duration: 10 seconds
-    - Final position: 2π rad (360°)
-    
-    Ground Truth:
-        θ(t) = ω * t  (linear position increase)
-        θ̇(t) = ω     (constant velocity)
-    """
     
     def __init__(self):
         super().__init__('constant_velocity_motion')

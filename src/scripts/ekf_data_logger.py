@@ -8,7 +8,6 @@ Logs:
     - EKF Estimate: Filtered position and velocity
 
 Author: Abithan
-Date: December 2025
 """
 
 import rclpy
@@ -80,13 +79,13 @@ class EKFDataLoggerVelocity(Node):
             'gt_pos1', 'gt_pos2', 'gt_pos3',
             # Ground truth velocities (for reference)
             'gt_vel1', 'gt_vel2', 'gt_vel3',
-            # Noisy positions (only positions have noise)
+            # Noisy positions
             'noisy_pos1', 'noisy_pos2', 'noisy_pos3',
             # Sensor velocities (no noise)
             'sensor_vel1', 'sensor_vel2', 'sensor_vel3',
             # EKF estimated positions
             'ekf_pos1', 'ekf_pos2', 'ekf_pos3',
-            # Covariance (position only)
+            # Covariance (position)
             'cov_pos1', 'cov_pos2', 'cov_pos3'
         ]
         self.csv_writer.writerow(header)
@@ -122,7 +121,6 @@ class EKFDataLoggerVelocity(Node):
         
         self.data_count = 0
         
-        # Start immediately if requested (to capture initial covariance)
         if self.start_immediately:
             self.start_time = self.get_clock().now()
             self.logging_active = True
@@ -178,7 +176,6 @@ class EKFDataLoggerVelocity(Node):
                                    f"Noisy: {self.noisy_pos is not None}, "
                                    f"EKF: {self.ekf_pos is not None}")
         
-        # Only require noisy and ekf data (ground truth may not be available before motion)
         if (self.noisy_pos is None or 
             self.ekf_pos is None):
             return
@@ -198,7 +195,7 @@ class EKFDataLoggerVelocity(Node):
             row.extend([0.0, 0.0, 0.0])  # No ground truth yet
             row.extend([0.0, 0.0, 0.0])
         
-        # Noisy position (only position has noise)
+        # Noisy position
         row.extend(self.noisy_pos[:3])
         
         # Sensor velocity (no noise)
@@ -207,7 +204,7 @@ class EKFDataLoggerVelocity(Node):
         # EKF estimated position
         row.extend(self.ekf_pos[:3])
         
-        # Covariance (position only - 3 values)
+        # Covariance (position)
         if self.covariance and len(self.covariance) >= 3:
             row.extend(self.covariance[:3])
         else:
